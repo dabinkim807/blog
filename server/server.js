@@ -130,6 +130,35 @@ app.put('/api/users/:userID', async (req, res) => {
 	return res.end();
 });
 
+app.delete('/api/posts/:postID', async (req, res) => {
+    const post_id = parseInt(req.params.postID);
+	try {
+		await db.query("DELETE FROM posts WHERE post_id = $1", [post_id]);
+	} catch(e) {
+		return res.status(400).send(String(e));
+	}
+	return res.end();
+});
+app.delete('/api/comments/:commentID', async (req, res) => {
+    const comment_id = parseInt(req.params.commentID);
+	try {
+		await db.query("DELETE FROM comments WHERE comment_id = $1", [comment_id]);
+	} catch(e) {
+		return res.status(400).send(String(e));
+	}
+	return res.end();
+});
+app.delete('/api/users/:userID', async (req, res) => {
+    const user_id = parseInt(req.params.userID);
+	try {
+		await db.query("DELETE FROM users WHERE user_id = $1", [user_id]);
+	} catch(e) {
+		return res.status(400).send(String(e));
+	}
+	return res.end();
+});
+
+
 app.listen(PORT, () => {
     console.log(`Hello, my server is listening on ${PORT}`);
 });
