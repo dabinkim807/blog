@@ -21,7 +21,6 @@ app.get('/api/posts', async (req, res) => {
         return res.status(400).send(String(e));
     }
 });
-
 app.get('/api/comments', async (req, res) => {
     try {
         const { rows: comments } = await db.query('SELECT * FROM comments ORDER BY comment_id ASC');
@@ -30,7 +29,6 @@ app.get('/api/comments', async (req, res) => {
         return res.status(400).send(String(e));
     }
 });
-
 app.get('/api/users', async (req, res) => {
     try {
         const { rows: users } = await db.query('SELECT * FROM users ORDER BY user_id ASC');
@@ -40,27 +38,57 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
-// app.post('/api/students', async (req, res) => {
-//     try {
-//         const newStudent = {
-//             firstname: req.body.firstname,
-//             lastname: req.body.lastname,
-//             iscurrent: req.body.iscurrent
-//         };
-//         //console.log([newStudent.firstname, newStudent.lastname, newStudent.iscurrent]);
-//         const result = await db.query(
-//             'INSERT INTO students(firstname, lastname, is_current) VALUES($1, $2, $3) RETURNING *',
-//             [newStudent.firstname, newStudent.lastname, newStudent.iscurrent],
-//         );
-//         console.log(result.rows[0]);
-//         res.json(result.rows[0]);
+app.post('/api/posts', async (req, res) => {
+    try {
+        const result = await db.query(
+            "INSERT INTO posts(date, title, author, post_body) VALUES(NOW(), $1, $2, $3) RETURNING *",
+            [req.body.title, req.body.author, req.body.post_body]
+        );
+        const returnObj = {
+            post_id: result.rows[0].post_id,
+            date: result.rows[0].date,
+            title: req.body.title,
+            author: req.body.author,
+            post_body: req.body.post_body
+        }
+        return res.status(200).json(returnObj);
+    } catch (e) {
+        return res.status(400).send(String(e));
+    }
+});
+app.post('/api/comments', async (req, res) => {
+    try {
+        const result = await db.query(
+            "INSERT INTO comments(date, comment, comment_author, post_id) VALUES(NOW(), $1, $2, $3) RETURNING *",
+            [req.body.comment, req.body.comment_author, req.body.post_id]
+        );
 
-//     } catch (e) {
-//         console.log(e);
-//         return res.status(400).json({ e });
-//     }
+        const findPost = await db.query("SELECT * FROM posts WHERE post_id = $1", [req.body.post_id]);
 
-// });
+        const returnObj = {
+            comment_id: result.rows[0].comment_id,
+            date: result.rows[0].date,
+            comment: req.body.title,
+            comment_author: req.body.author,
+            post_id: findPost.rows[0].post_id
+        }
+        return res.status(200).json(returnObj);
+    } catch (e) {
+        return res.status(400).send(String(e));
+    }
+});
+app.post('/api/users', async (req, res) => {
+    try {
+        const result = await db.query("INSERT INTO users(name) VALUES($1) RETURNING *", [req.body.name]);
+        const returnObj = {
+            user_id: result.rows[0].user_id,
+            name: req.body.name
+        }
+        return res.status(200).json(returnObj);
+    } catch (e) {
+        return res.status(400).send(String(e));
+    }
+});
 
 // app.delete('/api/students/:studentId', async (req, res) => {
 //     try {
