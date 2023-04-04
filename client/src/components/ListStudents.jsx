@@ -13,7 +13,7 @@ const ListStudents = () => {
 
     const loadStudents = () => {
         // A function to fetch the list of students that will be load anytime that list change
-        fetch("http://localhost:8081/api/students")
+        fetch("http://localhost:8080/api/students")
             .then((response) => response.json())
             .then((students) => {
                 setStudents(students);
