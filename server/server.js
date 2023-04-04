@@ -13,30 +13,64 @@ app.get('/', (req, res) => {
     res.json({ message: "Hello! This is Dana's template ExpressJS with React-Vite" });
 });
 
-app.get('/api/posts', async (req, res) => {
+app.get('/api/posts/:postID', async (req, res) => {
+    const post_id = parseInt(req.params.postID);
     try {
-        const { rows: posts } = await db.query('SELECT * FROM posts ORDER BY post_id ASC');
+        const { rows: posts } = await db.query('SELECT * FROM posts WHERE post_id = $1', [post_id]);
+        const { rows: comments } = await db.query('SELECT * FROM comments WHERE post_id = $1', [post_id]);
+        console.log(posts);
+        console.log(comments);
+        posts[0]["comments"] = comments;
+        console.log(posts);
         res.send(posts);
     } catch (e) {
         return res.status(400).send(String(e));
     }
 });
-app.get('/api/comments', async (req, res) => {
+// app.get('/api/comments', async (req, res) => {
+//     try {
+//         const { rows: comments } = await db.query('SELECT * FROM comments ORDER BY comment_id ASC');
+//         res.send(comments);
+//     } catch (e) {
+//         return res.status(400).send(String(e));
+//     }
+// });
+app.get('/api/posts', async (req, res) => {
     try {
-        const { rows: comments } = await db.query('SELECT * FROM comments ORDER BY comment_id ASC');
-        res.send(comments);
+        const { rows: posts } = await db.query(
+            `
+            SELECT 
+                p.post_id,
+                p.post_date, 
+                p.title, 
+                p.author, 
+                p.post_body, 
+                c.comment_id,
+                c.comment_date,
+                c.comment,
+                u.user_id,
+                u.name
+            FROM 
+                posts p
+                LEFT JOIN comments c ON p.post_id = c.post_id
+                LEFT JOIN users u ON u.user_id = c.user_id
+            ORDER BY post_date DESC
+            `
+        );
+        res.send(posts);
     } catch (e) {
+        console.log(e);
         return res.status(400).send(String(e));
     }
 });
-app.get('/api/users', async (req, res) => {
-    try {
-        const { rows: users } = await db.query('SELECT * FROM users ORDER BY user_id ASC');
-        res.send(users);
-    } catch (e) {
-        return res.status(400).send(String(e));
-    }
-});
+// app.get('/api/users', async (req, res) => {
+//     try {
+//         const { rows: users } = await db.query('SELECT * FROM users ORDER BY user_id ASC');
+//         res.send(users);
+//     } catch (e) {
+//         return res.status(400).send(String(e));
+//     }
+// });
 
 app.post('/api/posts', async (req, res) => {
     try {
@@ -46,7 +80,7 @@ app.post('/api/posts', async (req, res) => {
         );
         const returnObj = {
             post_id: result.rows[0].post_id,
-            date: result.rows[0].date,
+            post_date: result.rows[0].date,
             title: req.body.title,
             author: req.body.author,
             post_body: req.body.post_body
@@ -59,18 +93,19 @@ app.post('/api/posts', async (req, res) => {
 app.post('/api/comments', async (req, res) => {
     try {
         const result = await db.query(
-            "INSERT INTO comments(date, comment, comment_author, post_id) VALUES(NOW(), $1, $2, $3) RETURNING *",
-            [req.body.comment, req.body.comment_author, req.body.post_id]
+            "INSERT INTO comments(comment_date, comment, post_id, user_id) VALUES(NOW(), $1, $2, $3) RETURNING *",
+            [req.body.comment, req.body.post_id, req.body.user_id]
         );
 
         const findPost = await db.query("SELECT * FROM posts WHERE post_id = $1", [req.body.post_id]);
+        const findUser = await db.query("SELECT * FROM users WHERE user_id = $1", [req.body.user_id]);
 
         const returnObj = {
             comment_id: result.rows[0].comment_id,
-            date: result.rows[0].date,
+            comment_date: result.rows[0].comment_date,
             comment: req.body.comment,
-            comment_author: req.body.comment_author,
-            post_id: findPost.rows[0].post_id
+            post_id: findPost.rows[0].post_id,
+            user_id: findUser.rows[0].user_id
         }
         return res.status(200).json(returnObj);
     } catch (e) {
@@ -107,8 +142,8 @@ app.put('/api/comments/:commentID', async (req, res) => {
     const comment_id = parseInt(req.params.commentID);
 	try {
 		await db.query(
-			"UPDATE comments SET comment = $1, comment_author = $2 WHERE comment_id = $3 RETURNING *", 
-			[req.body.comment, req.body.comment_author, comment_id]
+			"UPDATE comments SET comment = $1 WHERE comment_id = $2 RETURNING *", 
+			[req.body.comment, comment_id]
 		);
 	} catch(e) {
         console.log(e);
