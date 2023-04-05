@@ -17,60 +17,57 @@ app.get('/api/posts/:postID', async (req, res) => {
     const post_id = parseInt(req.params.postID);
     try {
         const { rows: posts } = await db.query('SELECT * FROM posts WHERE post_id = $1', [post_id]);
-        const { rows: comments } = await db.query('SELECT * FROM comments WHERE post_id = $1', [post_id]);
-        console.log(posts);
-        console.log(comments);
-        posts[0]["comments"] = comments;
-        console.log(posts);
-        res.send(posts);
+        const post = posts[0];
+        const { rows: comments } = await db.query(
+            `
+            SELECT 
+                c.comment_id,
+                c.comment_date,
+                c.comment,
+                u.*
+            FROM 
+                comments c
+                JOIN users u ON u.user_id = c.user_id
+            WHERE post_id = $1
+            ORDER BY comment_date DESC
+            `
+            , [post_id]
+        );
+        post["comments"] = comments;
+        res.send(post);
     } catch (e) {
         return res.status(400).send(String(e));
     }
 });
-// app.get('/api/comments', async (req, res) => {
-//     try {
-//         const { rows: comments } = await db.query('SELECT * FROM comments ORDER BY comment_id ASC');
-//         res.send(comments);
-//     } catch (e) {
-//         return res.status(400).send(String(e));
-//     }
-// });
 app.get('/api/posts', async (req, res) => {
     try {
-        const { rows: posts } = await db.query(
+        const { rows: posts } = await db.query('SELECT * FROM posts');
+        const { rows: comments } = await db.query(
             `
             SELECT 
-                p.post_id,
-                p.post_date, 
-                p.title, 
-                p.author, 
-                p.post_body, 
-                c.comment_id,
-                c.comment_date,
-                c.comment,
-                u.user_id,
-                u.name
+                c.*,
+                u.*
             FROM 
-                posts p
-                LEFT JOIN comments c ON p.post_id = c.post_id
-                LEFT JOIN users u ON u.user_id = c.user_id
-            ORDER BY post_date DESC
+                comments c
+                JOIN users u ON u.user_id = c.user_id
+            ORDER BY comment_date DESC
             `
         );
+        
+        for (let i = 0; i < posts.length; i++) {
+            posts[i]["comments"] = [];
+            for (let j = 0; j < comments.length; j++) {
+                if (posts[i]["post_id"] === comments[j]["post_id"]) {
+                    posts[i]["comments"].push(comments[j]);
+                }
+            }   
+        }
         res.send(posts);
     } catch (e) {
         console.log(e);
         return res.status(400).send(String(e));
     }
 });
-// app.get('/api/users', async (req, res) => {
-//     try {
-//         const { rows: users } = await db.query('SELECT * FROM users ORDER BY user_id ASC');
-//         res.send(users);
-//     } catch (e) {
-//         return res.status(400).send(String(e));
-//     }
-// });
 
 app.post('/api/posts', async (req, res) => {
     try {
