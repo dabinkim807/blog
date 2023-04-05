@@ -53,15 +53,18 @@ app.get('/api/posts', async (req, res) => {
             ORDER BY comment_date DESC
             `
         );
-        
+        const ref = {};
+
         for (let i = 0; i < posts.length; i++) {
-            posts[i]["comments"] = [];
-            for (let j = 0; j < comments.length; j++) {
-                if (posts[i]["post_id"] === comments[j]["post_id"]) {
-                    posts[i]["comments"].push(comments[j]);
-                }
-            }   
+            ref[posts[i]["post_id"]] = [];
         }
+        for (let i = 0; i < comments.length; i++) {
+            ref[comments[i]["post_id"]].push(comments[i]);
+        }
+        for (let i = 0; i < posts.length; i++) {
+            posts[i]["comments"] = ref[posts[i]["post_id"]];
+        }
+
         res.send(posts);
     } catch (e) {
         console.log(e);
