@@ -188,7 +188,7 @@ app.get('/api/posts3', async (req, res) => {
 
 
 
-
+// unused routes below -- do not use for demo
 
 
 app.post('/api/posts', async (req, res) => {
