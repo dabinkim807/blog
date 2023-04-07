@@ -39,7 +39,9 @@ app.get('/api/posts/:postID', async (req, res) => {
         return res.status(400).send(String(e));
     }
 });
-app.get('/api/posts', async (req, res) => {
+
+// nested for loop method - runtime: O(p * c), space: O(1)
+app.get('/api/posts1', async (req, res) => {
     try {
         const { rows: posts } = await db.query('SELECT * FROM posts');
         const { rows: comments } = await db.query(
@@ -53,8 +55,45 @@ app.get('/api/posts', async (req, res) => {
             ORDER BY comment_date DESC
             `
         );
-        const ref = {};
+        
+        let start = Date.now();
+        
+        for (let i = 0; i < posts.length; i++) {
+            posts[i]["comments"] = [];
+            for (let j = 0; j < comments.length; j++) {
+                if (posts[i]["post_id"] === comments[j]["post_id"]) {
+                    posts[i]["comments"].push(comments[j]);
+                }
+            }
+        }
+        let elapsed = Date.now() - start;
 
+        res.json({elapsed: elapsed, posts: posts});
+    } catch (e) {
+        console.log(e);
+        return res.status(400).send(String(e));
+    }
+});
+
+// // 3 for loop + object method - runtime: O(p + c), space: O(p + c)
+app.get('/api/posts2', async (req, res) => {
+    try {
+        const { rows: posts } = await db.query('SELECT * FROM posts');
+        const { rows: comments } = await db.query(
+            `
+            SELECT 
+                c.*,
+                u.*
+            FROM 
+                comments c
+                JOIN users u ON u.user_id = c.user_id
+            ORDER BY comment_date DESC
+            `
+        );
+        
+        let start = Date.now();
+        
+        const ref = {};
         for (let i = 0; i < posts.length; i++) {
             ref[posts[i]["post_id"]] = [];
         }
@@ -65,17 +104,72 @@ app.get('/api/posts', async (req, res) => {
             posts[i]["comments"] = ref[posts[i]["post_id"]];
         }
 
-        res.send(posts);
+        let elapsed = Date.now() - start;
+
+        res.json({elapsed: elapsed, posts: posts});
+    } catch (e) {
+        console.log(e);
+        return res.status(400).send(String(e));
+    }
+});
+        
+// sort + while loop + for loop method - runtime: O(p + c), space: O(1)
+app.get('/api/posts3', async (req, res) => {
+    try {
+        const { rows: posts } = await db.query('SELECT * FROM posts');
+        for (let post of posts) {
+            post["comments"] = [];
+        }
+        const { rows: comments } = await db.query(
+            `
+            SELECT 
+                c.*,
+                u.*
+            FROM 
+                comments c
+                JOIN users u ON u.user_id = c.user_id
+            ORDER BY post_id ASC, comment_date DESC
+            `
+        );
+        
+
+        let start = Date.now();
+        
+        let i = 0;
+        let j = 0; 
+        while (i < posts.length && j < comments.length) {
+            // posts[i]["comments"] = [];
+            if (posts[i]["post_id"] === comments[j]["post_id"]) {
+                posts[i]["comments"].push(comments[j]);
+                j++;
+            } else {
+                i++;
+            }
+        }
+        
+        // while (i < posts.length) {
+        //     posts[i]["comments"] = [];
+        //     i++;
+        // }
+
+        let elapsed = Date.now() - start;
+
+        res.json({elapsed: elapsed, posts: posts});
     } catch (e) {
         console.log(e);
         return res.status(400).send(String(e));
     }
 });
 
+
+
+
+
+
 app.post('/api/posts', async (req, res) => {
     try {
         const result = await db.query(
-            "INSERT INTO posts(date, title, author, post_body) VALUES(NOW(), $1, $2, $3) RETURNING *",
+            "INSERT INTO posts(post_date, title, author, post_body) VALUES(NOW(), $1, $2, $3) RETURNING *",
             [req.body.title, req.body.author, req.body.post_body]
         );
         const returnObj = {
