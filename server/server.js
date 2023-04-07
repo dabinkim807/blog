@@ -132,7 +132,6 @@ app.get('/api/posts3', async (req, res) => {
             `
         );
         
-
         let start = Date.now();
         
         let i = 0;
@@ -187,8 +186,6 @@ app.get('/api/posts3', async (req, res) => {
 // })
 
 
-
-
 app.post('/api/posts', async (req, res) => {
     try {
         const result = await db.query(
@@ -241,6 +238,10 @@ app.post('/api/users', async (req, res) => {
         return res.status(400).send(String(e));
     }
 });
+
+
+
+
 
 app.put('/api/posts/:postID', async (req, res) => {
     const post_id = parseInt(req.params.postID);
