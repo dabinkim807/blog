@@ -68,14 +68,14 @@ app.get('/api/posts1', async (req, res) => {
         }
         let elapsed = Date.now() - start;
 
-        res.json({elapsed: elapsed, posts: posts});
+        res.json({elapsed: elapsed, posts: posts.slice(0, 10)});
     } catch (e) {
         console.log(e);
         return res.status(400).send(String(e));
     }
 });
 
-// // 3 for loop + object method - runtime: O(p + c), space: O(p + c)
+// 3 for loop + object method - runtime: O(p + c), space: O(p + c)
 app.get('/api/posts2', async (req, res) => {
     try {
         const { rows: posts } = await db.query('SELECT * FROM posts');
@@ -106,7 +106,7 @@ app.get('/api/posts2', async (req, res) => {
 
         let elapsed = Date.now() - start;
 
-        res.json({elapsed: elapsed, posts: posts});
+        res.json({elapsed: elapsed, posts: posts.slice(0, 10)});
     } catch (e) {
         console.log(e);
         return res.status(400).send(String(e));
@@ -153,7 +153,7 @@ app.get('/api/posts3', async (req, res) => {
 
         let elapsed = Date.now() - start;
 
-        res.json({elapsed: elapsed, posts: posts});
+        res.json({elapsed: elapsed, posts: posts.slice(0, 10)});
     } catch (e) {
         console.log(e);
         return res.status(400).send(String(e));
@@ -184,6 +184,11 @@ app.get('/api/posts3', async (req, res) => {
 //         return res.status(400).send(String(e));
 //     }
 // })
+
+
+
+
+
 
 
 app.post('/api/posts', async (req, res) => {
@@ -238,10 +243,6 @@ app.post('/api/users', async (req, res) => {
         return res.status(400).send(String(e));
     }
 });
-
-
-
-
 
 app.put('/api/posts/:postID', async (req, res) => {
     const post_id = parseInt(req.params.postID);
