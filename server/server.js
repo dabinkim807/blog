@@ -161,7 +161,30 @@ app.get('/api/posts3', async (req, res) => {
     }
 });
 
-
+// app.get('/api/do_not_use_more_than_once', async (req, res) => {
+//     try {
+//         const numPosts = 10000;
+//         const avgCommentsPerPost = 10;
+//         let postIds = [];
+//         for ( let i = 0; i < numPosts; i++) {
+//             const res = await db.query(
+//                 "INSERT INTO posts(post_date, title, author, post_body) VALUES(NOW(), $1, $2, $3) RETURNING *",
+//                 [`T${i}`, "Dana", "K"]
+//             );
+//             postIds.push(res.rows[0].post_id);
+//         }
+//         for ( let i = 0; i < numPosts * avgCommentsPerPost; i++ ) {
+//             let pid = Math.floor(Math.random() * numPosts)
+//             db.query(
+//                 "INSERT INTO comments(comment_date, comment, post_id, user_id) VALUES(NOW(), $1, $2, $3) RETURNING *",
+//                 ["c", postIds[pid], 2]
+//             );
+//         }
+//         return res.status(200).end();
+//     } catch (e) {
+//         return res.status(400).send(String(e));
+//     }
+// })
 
 
 
