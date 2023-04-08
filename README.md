@@ -1,4 +1,4 @@
-# Blog App - Algorithms and Databasing (Backend Only)
+# Blog App - Algorithms and Database (Backend Only)
 
 
 This project demonstrates several different algorithms that can be used to return data from the backend to the frontend, and tests the runtime complexity of each by using fake data.
